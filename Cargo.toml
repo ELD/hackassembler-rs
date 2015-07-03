@@ -3,6 +3,11 @@ name = "hack-assembler-rs"
 version = "0.1.0"
 authors = ["Eric L. Dattore <eric.dattore@gmail.com>"]
 
+[lib]
+name = "hackasm"
+path = "src/lib.rs"
+test = true
+
 [profile.dev]
 opt-level = 0
 debug = true
