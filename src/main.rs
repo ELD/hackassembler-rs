@@ -1,6 +1,8 @@
 extern crate hackasm;
 
 use std::env;
+use std::fs::File;
+use std::io::prelude::*;
 use hackasm::syntax::lex::Lexer;
 
 fn main() {
@@ -9,18 +11,8 @@ fn main() {
         None => panic!("No file path supplied!"),
     };
 
-    let mut lexer = Lexer::new(&file_path);
-
-    println!("{:?}", lexer.iter().next());
-    println!("{:?}", lexer.iter().next());
-    println!("{:?}", lexer.iter().next());
-    println!("{:?}", lexer.iter().next());
-    println!("{:?}", lexer.iter().next());
-    println!("{:?}", lexer.iter().next());
-    println!("{:?}", lexer.iter().next());
-    println!("{:?}", lexer.iter().next());
-    println!("{:?}", lexer.iter().next());
-    println!("{:?}", lexer.iter().next());
+    let mut my_file = File::open(file_path).unwrap();
+    let mut lexer = Lexer::new(&mut my_file);
 
     // Construct parser
     // Pipe (functionally?) each line to codewriter and dump into buffer
