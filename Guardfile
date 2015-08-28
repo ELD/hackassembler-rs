@@ -26,7 +26,7 @@ guard :shell do
               .sub(/\/mod\.rs/, '.rs')
               .sub(/\/tests\.rs/, '.rs')
               .gsub(/\//, '::')
-              .sub(/\.rs/, '::tests')
+              .sub(/\.rs/, '::test')
 
     `cargo test #{mod}`
   end
