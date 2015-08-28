@@ -15,7 +15,7 @@ impl Lexer {
     pub fn new<T: Read>(resource: &mut T) -> Self {
         let mut file_contents = String::new();
         resource.read_to_string(&mut file_contents);
-        let lines = file_contents.split('\n').map(|token| String::from(token) ).collect::<Vec<String>>();
+        let lines = file_contents.split('\n').filter_map(|token| if token == "" { None } else { Some(String::from(token)) }).collect::<Vec<String>>();
 
         Lexer {
             lines: lines,

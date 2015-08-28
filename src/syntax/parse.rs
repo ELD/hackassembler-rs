@@ -99,7 +99,8 @@ impl<'a> Parser<'a> {
                 let comp_bits = self.get_comp_bits(token);
                 let dest_bits = self.get_dest_bits(token);
                 let jump_bits = self.get_jump_bits(token);
-                unimplemented!();
+
+                opcode = opcode + &comp_bits + &dest_bits + &jump_bits;
             },
         }
 

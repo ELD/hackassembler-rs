@@ -5,6 +5,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use hackasm::syntax::lex::Lexer;
+use hackasm::syntax::parse::Parser;
 
 fn main() {
     let file_path = match env::args().nth(1) {
@@ -18,9 +19,10 @@ fn main() {
     };
 
     let mut lexer = Lexer::new(&mut my_file);
+    let parser = Parser::new();
+    let opcodes = lexer.iter().map(|token| parser.parse(token)).collect::<Vec<String>>();
 
-    // PSEUDOCODE
-    //let mut parser = Parser::new();
-    //let code = lexer.iter().map(|token| parser.parse(token)).collect::<Vec<String>>();
-    //output_file.write(code);
+    for opcode in opcodes.iter() {
+        println!("{}", opcode);
+    }
 }
