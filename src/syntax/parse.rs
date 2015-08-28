@@ -5,7 +5,7 @@ pub struct Parser<'a> {
     pc: u32,
     l_command_regex: Regex,
     a_command_regex: Regex,
-    comp_bits: HashMap<&'a str, (&'a str, &'a str)>,
+    comp_bits: HashMap<&'a str, &'a str>,
     dest_bits: HashMap<&'a str, &'a str>,
     jump_bits: HashMap<&'a str, &'a str>,
     //symbol_table: HashMap<String, u32>,
@@ -21,34 +21,34 @@ pub enum TokenType {
 impl<'a> Parser<'a> {
     pub fn new() -> Self {
         let mut comp_bits = HashMap::new();
-        comp_bits.insert("0", ("0", "101010"));
-        comp_bits.insert("1", ("0", "111111"));
-        comp_bits.insert("-1", ("0", "111010"));
-        comp_bits.insert("D", ("0", "001100"));
-        comp_bits.insert("A", ("0", "110000"));
-        comp_bits.insert("!D", ("0", "001101"));
-        comp_bits.insert("!A", ("0", "110001"));
-        comp_bits.insert("-D", ("0", "001111"));
-        comp_bits.insert("-A", ("0", "110011"));
-        comp_bits.insert("D+1", ("0", "011111"));
-        comp_bits.insert("A+1", ("0", "110111"));
-        comp_bits.insert("D-1", ("0", "001110"));
-        comp_bits.insert("A-1", ("0", "110010"));
-        comp_bits.insert("D+A", ("0", "000010"));
-        comp_bits.insert("D-A", ("0", "010011"));
-        comp_bits.insert("A-D", ("0", "000111"));
-        comp_bits.insert("D&A", ("0", "000000"));
-        comp_bits.insert("D|A", ("0", "010101"));
-        comp_bits.insert("M", ("1", "110000"));
-        comp_bits.insert("!M", ("1", "110001"));
-        comp_bits.insert("-M", ("1", "110011"));
-        comp_bits.insert("M+1", ("1", "110111"));
-        comp_bits.insert("M-1", ("1", "110010"));
-        comp_bits.insert("D+M", ("1", "000010"));
-        comp_bits.insert("D-M", ("1", "010011"));
-        comp_bits.insert("M-D", ("1", "000111"));
-        comp_bits.insert("D&M", ("1", "000000"));
-        comp_bits.insert("D|M", ("1", "010101"));
+        comp_bits.insert("0", "0101010");
+        comp_bits.insert("1", "0111111");
+        comp_bits.insert("-1", "0111010");
+        comp_bits.insert("D", "0001100");
+        comp_bits.insert("A", "0110000");
+        comp_bits.insert("!D", "0001101");
+        comp_bits.insert("!A", "0110001");
+        comp_bits.insert("-D", "0001111");
+        comp_bits.insert("-A", "0110011");
+        comp_bits.insert("D+1", "0011111");
+        comp_bits.insert("A+1", "0110111");
+        comp_bits.insert("D-1", "0001110");
+        comp_bits.insert("A-1", "0110010");
+        comp_bits.insert("D+A", "0000010");
+        comp_bits.insert("D-A", "0010011");
+        comp_bits.insert("A-D", "0000111");
+        comp_bits.insert("D&A", "0000000");
+        comp_bits.insert("D|A", "0010101");
+        comp_bits.insert("M", "1110000");
+        comp_bits.insert("!M", "1110001");
+        comp_bits.insert("-M", "1110011");
+        comp_bits.insert("M+1", "1110111");
+        comp_bits.insert("M-1", "1110010");
+        comp_bits.insert("D+M", "1000010");
+        comp_bits.insert("D-M", "1010011");
+        comp_bits.insert("M-D", "1000111");
+        comp_bits.insert("D&M", "1000000");
+        comp_bits.insert("D|M", "1010101");
 
         let mut dest_bits = HashMap::new();
         dest_bits.insert("null", "000");
@@ -119,15 +119,36 @@ impl<'a> Parser<'a> {
     }
 
     pub fn get_comp_bits<'b>(&'b self, token: &'b str) -> String {
-        unimplemented!();
+        let mut comp_bits = String::new();
+        if token.contains(";") {
+            let mut comp_split = token.split(";");
+            comp_bits = comp_bits + self.comp_bits.get(comp_split.nth(0).unwrap()).unwrap();
+        } else {
+            let mut comp_split = token.split("=");
+            comp_bits = comp_bits + self.comp_bits.get(comp_split.nth(1).unwrap()).unwrap();
+        }
+
+        comp_bits
     }
 
     pub fn get_dest_bits<'b>(&'b self, token: &'b str) -> String {
-        unimplemented!();
+        if token.contains(";") {
+            return String::from(*self.dest_bits.get("null").unwrap());
+        }
+
+        let mut dest_split = token.split("=");
+        let dest_bits = String::from(*self.dest_bits.get(dest_split.nth(0).unwrap()).unwrap());
+
+        dest_bits
     }
 
     pub fn get_jump_bits<'b>(&'b self, token: &'b str) -> String {
-        unimplemented!();
+        if token.contains("=") {
+            return String::from(*self.jump_bits.get("null").unwrap());
+        }
+
+        let mut jump_split = token.split(";");
+        String::from(*self.jump_bits.get(jump_split.nth(1).unwrap()).unwrap())
     }
 }
 
@@ -172,13 +193,34 @@ mod test {
     }
 
     #[test]
-    fn test_get_comp_bits() {
+    fn gets_correct_comp_bits() {
         let parser = setup();
 
-        assert_eq!(parser.parse("0;JMP"), "0101010");
-        assert_eq!(parser.parse("M=!A"), "0110001");
-        assert_eq!(parser.parse("D=!M"), "1110001");
-        assert_eq!(parser.parse("D&M;JLT"), "1000000");
+        assert_eq!(parser.get_comp_bits("0;JMP"), "0101010");
+        assert_eq!(parser.get_comp_bits("M=!A"), "0110001");
+        assert_eq!(parser.get_comp_bits("D=!M"), "1110001");
+        assert_eq!(parser.get_comp_bits("D&M;JLT"), "1000000");
+    }
+
+    #[test]
+    fn gets_correct_dest_bits() {
+        let parser = setup();
+
+        assert_eq!(parser.get_dest_bits("0;JMP"), "000");
+        assert_eq!(parser.get_dest_bits("A=M+D"), "100");
+        assert_eq!(parser.get_dest_bits("AM=D|M"), "101");
+        assert_eq!(parser.get_dest_bits("MD=D+A"), "011");
+        assert_eq!(parser.get_dest_bits("AMD=D&M"), "111");
+    }
+
+    #[test]
+    fn gets_correct_jump_bits() {
+        let parser = setup();
+
+        assert_eq!(parser.get_jump_bits("0;JMP"), "111");
+        assert_eq!(parser.get_jump_bits("A=M+D"), "000");
+        assert_eq!(parser.get_jump_bits("D;JLE"), "110");
+        assert_eq!(parser.get_jump_bits("D|M;JEQ"), "010");
     }
 }
 
