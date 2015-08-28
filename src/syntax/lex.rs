@@ -1,5 +1,4 @@
 use std::io::prelude::*;
-use std::fs::File;
 use std::slice::Iter;
 
 pub struct Lexer {
@@ -14,7 +13,7 @@ impl Lexer {
     /// Constructs a new Lexer structure for reading a file and iterating over the lines.
     pub fn new<T: Read>(resource: &mut T) -> Self {
         let mut file_contents = String::new();
-        resource.read_to_string(&mut file_contents);
+        resource.read_to_string(&mut file_contents).unwrap();
         let lines = file_contents.split('\n').filter_map(|token| if token == "" { None } else { Some(String::from(token)) }).collect::<Vec<String>>();
 
         Lexer {

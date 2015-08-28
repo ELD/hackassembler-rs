@@ -104,7 +104,7 @@ impl<'a> Parser<'a> {
             },
         }
 
-        opcode
+        opcode + "\n"
     }
 
     pub fn token_type<'b>(&'b self, token: &'b str) -> TokenType {
