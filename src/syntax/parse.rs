@@ -3,12 +3,13 @@ use regex::Regex;
 
 pub struct Parser<'a> {
     pc: u32,
+    mem: u32,
     l_command_regex: Regex,
     a_command_regex: Regex,
     comp_bits: HashMap<&'a str, &'a str>,
     dest_bits: HashMap<&'a str, &'a str>,
     jump_bits: HashMap<&'a str, &'a str>,
-    //symbol_table: HashMap<String, u32>,
+    symbol_table: HashMap<&'a str, u32>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -70,13 +71,40 @@ impl<'a> Parser<'a> {
         jump_bits.insert("JLE", "110");
         jump_bits.insert("JMP", "111");
 
+        let mut symbol_table = HashMap::new();
+        symbol_table.insert("SP", 0);
+        symbol_table.insert("LCL", 1);
+        symbol_table.insert("ARG", 2);
+        symbol_table.insert("THIS", 3);
+        symbol_table.insert("THAT", 4);
+        symbol_table.insert("R0", 0);
+        symbol_table.insert("R1", 1);
+        symbol_table.insert("R2", 2);
+        symbol_table.insert("R3", 3);
+        symbol_table.insert("R4", 4);
+        symbol_table.insert("R5", 5);
+        symbol_table.insert("R6", 6);
+        symbol_table.insert("R7", 7);
+        symbol_table.insert("R8", 8);
+        symbol_table.insert("R9", 9);
+        symbol_table.insert("R10", 10);
+        symbol_table.insert("R11", 11);
+        symbol_table.insert("R12", 12);
+        symbol_table.insert("R13", 13);
+        symbol_table.insert("R14", 14);
+        symbol_table.insert("R15", 15);
+        symbol_table.insert("SCREEN", 16384);
+        symbol_table.insert("KBD", 24576);
+
         Parser {
             pc: 0,
+            mem: 16,
             l_command_regex: Regex::new(r"\((.*)\)").unwrap(),
             a_command_regex: Regex::new(r"@([\w|\d].*)").unwrap(),
             comp_bits: comp_bits,
             dest_bits: dest_bits,
             jump_bits: jump_bits,
+            symbol_table: symbol_table,
         }
     }
 
@@ -180,17 +208,17 @@ mod test {
     fn parse_output_for_a_command() {
         let parser = setup();
 
-        assert_eq!(parser.parse("@5"), "0000000000000101");
+        assert_eq!(parser.parse("@5"), "0000000000000101\n");
     }
 
     #[test]
     fn parse_output_for_c_command() {
         let parser = setup();
 
-        assert_eq!(parser.parse("M=D+A"), "1110000010001000");
-        assert_eq!(parser.parse("AMD=D|A"), "1110010101111000");
-        assert_eq!(parser.parse("0;JMP"), "1110101010000111");
-        assert_eq!(parser.parse("A;JGE"), "1110110000000011");
+        assert_eq!(parser.parse("M=D+A"), "1110000010001000\n");
+        assert_eq!(parser.parse("AMD=D|A"), "1110010101111000\n");
+        assert_eq!(parser.parse("0;JMP"), "1110101010000111\n");
+        assert_eq!(parser.parse("A;JGE"), "1110110000000011\n");
     }
 
     #[test]
@@ -222,6 +250,16 @@ mod test {
         assert_eq!(parser.get_jump_bits("A=M+D"), "000");
         assert_eq!(parser.get_jump_bits("D;JLE"), "110");
         assert_eq!(parser.get_jump_bits("D|M;JEQ"), "010");
+    }
+
+    #[test]
+    fn gets_correct_symbols() {
+        let parser = setup();
+
+        assert_eq!(*parser.symbol_table.get("R0").unwrap(), 0);
+        assert_eq!(*parser.symbol_table.get("SCREEN").unwrap(), 16384);
+        assert_eq!(*parser.symbol_table.get("KBD").unwrap(), 24576);
+        assert_eq!(*parser.symbol_table.get("LCL").unwrap(), 1);
     }
 }
 

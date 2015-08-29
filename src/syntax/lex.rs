@@ -44,7 +44,7 @@ mod test {
     use std::io::Cursor;
 
     const TEST_INPUT: &'static str = "@2\nD=A\n@3\nD=D+A\n@0\nM=D\n";
-    static TEST_TOKENIZED_RESULT: &'static [&'static str] = &["@2", "D=A", "@3", "D=D+A", "@0", "M=D", ""];
+    static TEST_TOKENIZED_RESULT: &'static [&'static str] = &["@2", "D=A", "@3", "D=D+A", "@0", "M=D"];
 
     fn setup() -> Lexer {
         Lexer::new(&mut Cursor::new(TEST_INPUT.as_bytes()))
