@@ -1,5 +1,6 @@
 use std::io::prelude::*;
 use std::slice::Iter;
+use regex::Regex;
 
 pub struct Lexer {
     lines: Vec<String>,
@@ -14,7 +15,11 @@ impl Lexer {
     pub fn new<T: Read>(resource: &mut T) -> Self {
         let mut file_contents = String::new();
         resource.read_to_string(&mut file_contents).unwrap();
-        let lines = file_contents.split('\n').filter_map(|token| if token == "" { None } else { Some(String::from(token)) }).collect::<Vec<String>>();
+        let lines = file_contents.split('\n').filter_map(|token| {
+            let trimmed_token = Lexer::trim_command(token);
+
+            if Lexer::is_ignored_token(trimmed_token) || trimmed_token == "" { None } else { Some(String::from(trimmed_token)) }
+        }).collect::<Vec<String>>();
 
         Lexer {
             lines: lines,
@@ -23,6 +28,20 @@ impl Lexer {
 
     pub fn iter<'a>(&'a mut self) -> LexerIter<'a> {
         LexerIter { line_iter: self.lines.iter() }
+    }
+
+    fn is_ignored_token<'a>(token: &'a str) -> bool {
+        token.starts_with("//")
+    }
+
+    fn trim_command<'a>(token: &'a str) -> &'a str {
+        let command_regex = Regex::new(r"^\s*(\S*)\s*(//.*)*$").unwrap();
+
+        let trimmed_token = token.trim();
+
+        let capture = command_regex.captures(trimmed_token).unwrap();
+
+        capture.at(1).unwrap()
     }
 }
 
@@ -66,6 +85,19 @@ mod test {
             assert_eq!(line, TEST_TOKENIZED_RESULT[counter]);
             counter += 1;
         }
+    }
+
+    #[test]
+    fn ignored_token() {
+        assert!(Lexer::is_ignored_token("// this is a comment"));
+        assert!(!Lexer::is_ignored_token("@R1"));
+    }
+
+    #[test]
+    fn trims_token() {
+        assert_eq!(Lexer::trim_command("@R1 // some comment"), "@R1");
+        assert_eq!(Lexer::trim_command("(LOOP)//another comment"), "(LOOP)");
+        assert_eq!(Lexer::trim_command("\tAMD=M+D\t//some comment"), "AMD=M+D");
     }
 }
 
