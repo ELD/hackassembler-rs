@@ -35,7 +35,7 @@ impl Lexer {
     }
 
     fn trim_command<'a>(token: &'a str) -> &'a str {
-        let command_regex = Regex::new(r"^\s*(\S*)\s*(//.*)*$").unwrap();
+        let command_regex = Regex::new(r"(\S*)(?:\s?//.*)?").unwrap();
 
         let trimmed_token = token.trim();
 
@@ -100,4 +100,3 @@ mod test {
         assert_eq!(Lexer::trim_command("\tAMD=M+D\t//some comment"), "AMD=M+D");
     }
 }
-
