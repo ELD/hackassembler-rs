@@ -35,13 +35,12 @@ impl Lexer {
     }
 
     fn trim_command<'a>(token: &'a str) -> &'a str {
-        let command_regex = Regex::new(r"(\S*)(?:\s?//.*)?").unwrap();
+        // let command_regex = Regex::new(r"(\S*)(?:\s?//.*)?").unwrap();
+        let command_regex = Regex::new(r"([^//]*)").unwrap();
 
-        let trimmed_token = token.trim();
+        let capture = command_regex.captures(token).unwrap();
 
-        let capture = command_regex.captures(trimmed_token).unwrap();
-
-        capture.at(1).unwrap()
+        capture.at(1).unwrap().trim()
     }
 }
 
