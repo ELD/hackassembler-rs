@@ -240,14 +240,14 @@ mod test {
 
     #[test]
     fn parse_output_for_a_command() {
-        let parser = setup();
+        let mut parser = setup();
 
         assert_eq!(parser.parse("@5"), "0000000000000101\n");
     }
 
     #[test]
     fn parse_output_for_c_command() {
-        let parser = setup();
+        let mut parser = setup();
 
         assert_eq!(parser.parse("M=D+A"), "1110000010001000\n");
         assert_eq!(parser.parse("AMD=D|A"), "1110010101111000\n");
