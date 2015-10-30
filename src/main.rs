@@ -20,7 +20,13 @@ fn main() {
     };
 
     let mut lexer = Lexer::new(&mut my_file);
-    let parser = Parser::new();
+    let mut parser = Parser::new();
+
+    // Collect symbols
+    for token in lexer.iter() {
+        parser.collect_symbols(token);
+    }
+    // Translate assembly
     let opcodes = lexer.iter().map(|token| parser.parse(token)).collect::<Vec<String>>();
 
     let output_file = match File::create("output.hack") {

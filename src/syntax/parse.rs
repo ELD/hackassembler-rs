@@ -9,7 +9,7 @@ pub struct Parser<'a> {
     comp_bits: HashMap<&'a str, &'a str>,
     dest_bits: HashMap<&'a str, &'a str>,
     jump_bits: HashMap<&'a str, &'a str>,
-    symbol_table: HashMap<&'a str, u32>,
+    symbol_table: HashMap<String, u32>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -72,29 +72,29 @@ impl<'a> Parser<'a> {
         jump_bits.insert("JMP", "111");
 
         let mut symbol_table = HashMap::new();
-        symbol_table.insert("SP", 0);
-        symbol_table.insert("LCL", 1);
-        symbol_table.insert("ARG", 2);
-        symbol_table.insert("THIS", 3);
-        symbol_table.insert("THAT", 4);
-        symbol_table.insert("R0", 0);
-        symbol_table.insert("R1", 1);
-        symbol_table.insert("R2", 2);
-        symbol_table.insert("R3", 3);
-        symbol_table.insert("R4", 4);
-        symbol_table.insert("R5", 5);
-        symbol_table.insert("R6", 6);
-        symbol_table.insert("R7", 7);
-        symbol_table.insert("R8", 8);
-        symbol_table.insert("R9", 9);
-        symbol_table.insert("R10", 10);
-        symbol_table.insert("R11", 11);
-        symbol_table.insert("R12", 12);
-        symbol_table.insert("R13", 13);
-        symbol_table.insert("R14", 14);
-        symbol_table.insert("R15", 15);
-        symbol_table.insert("SCREEN", 16384);
-        symbol_table.insert("KBD", 24576);
+        symbol_table.insert(String::from("SP"), 0);
+        symbol_table.insert(String::from("LCL"), 1);
+        symbol_table.insert(String::from("ARG"), 2);
+        symbol_table.insert(String::from("THIS"), 3);
+        symbol_table.insert(String::from("THAT"), 4);
+        symbol_table.insert(String::from("R0"), 0);
+        symbol_table.insert(String::from("R1"), 1);
+        symbol_table.insert(String::from("R2"), 2);
+        symbol_table.insert(String::from("R3"), 3);
+        symbol_table.insert(String::from("R4"), 4);
+        symbol_table.insert(String::from("R5"), 5);
+        symbol_table.insert(String::from("R6"), 6);
+        symbol_table.insert(String::from("R7"), 7);
+        symbol_table.insert(String::from("R8"), 8);
+        symbol_table.insert(String::from("R9"), 9);
+        symbol_table.insert(String::from("R10"), 10);
+        symbol_table.insert(String::from("R11"), 11);
+        symbol_table.insert(String::from("R12"), 12);
+        symbol_table.insert(String::from("R13"), 13);
+        symbol_table.insert(String::from("R14"), 14);
+        symbol_table.insert(String::from("R15"), 15);
+        symbol_table.insert(String::from("SCREEN"), 16384);
+        symbol_table.insert(String::from("KBD"), 24576);
 
         Parser {
             pc: 0,
@@ -111,15 +111,19 @@ impl<'a> Parser<'a> {
     pub fn parse<'b>(&'b self, token: &'b str) -> String {
         let mut opcode = String::new();
         match self.token_type(token) {
-            TokenType::LCommand => {
-                unimplemented!();
-            },
+            TokenType::LCommand => {},
             TokenType::ACommand => {
                 opcode.push_str("0");
                 let capture = self.a_command_regex.captures(token).unwrap();
                 let digit = capture.at(1).unwrap();
 
-                let bits = format!("{:0>15b}", digit.parse::<i32>().unwrap());
+                let bits: String;
+                if self.symbol_table.contains_key(digit) {
+                    bits = format!("{:0>15b}", self.symbol_table.get(digit).unwrap());
+                } else {
+                    bits = format!("{:0>15b}", digit.parse::<i32>().unwrap());
+                }
+
                 opcode = opcode + &bits;
             },
             TokenType::CCommand => {
@@ -178,6 +182,32 @@ impl<'a> Parser<'a> {
 
         let mut jump_split = token.split(";");
         String::from(*self.jump_bits.get(jump_split.nth(1).unwrap()).unwrap())
+    }
+
+    pub fn collect_symbols<'b>(&'b mut self, token: &'b str) {
+        if token == "" { return; }
+
+        match self.token_type(token) {
+            TokenType::LCommand => {
+                let capture = self.l_command_regex.captures(token).unwrap();
+                let label = capture.at(1).unwrap();
+                self.symbol_table.insert(String::from(label), self.pc);
+            },
+            TokenType::ACommand => {
+                let capture = self.a_command_regex.captures(token).unwrap();
+                let variable = capture.at(1).unwrap();
+                match variable.parse::<i32>() {
+                    Err(_) => {
+                        if !self.symbol_table.contains_key(variable) {
+                            self.symbol_table.insert(String::from(variable), self.pc);
+                        }
+                    },
+                    _ => {},
+                }
+            },
+            _ => {},
+        }
+        self.pc += 1;
     }
 }
 
@@ -262,4 +292,3 @@ mod test {
         assert_eq!(*parser.symbol_table.get("LCL").unwrap(), 1);
     }
 }
-
