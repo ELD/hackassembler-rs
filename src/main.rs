@@ -26,6 +26,7 @@ fn main() {
     for token in lexer.iter() {
         parser.collect_symbols(token);
     }
+    
     // Translate assembly
     let opcodes = lexer.iter().map(|token| parser.parse(token)).collect::<Vec<String>>();
 

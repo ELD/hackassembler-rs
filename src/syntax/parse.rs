@@ -108,7 +108,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse<'b>(&'b self, token: &'b str) -> String {
+    pub fn parse<'b>(&'b mut self, token: &'b str) -> String {
         let mut opcode = String::new();
         match self.token_type(token) {
             TokenType::LCommand => {},
@@ -121,7 +121,18 @@ impl<'a> Parser<'a> {
                 if self.symbol_table.contains_key(digit) {
                     bits = format!("{:0>15b}", self.symbol_table.get(digit).unwrap());
                 } else {
-                    bits = format!("{:0>15b}", digit.parse::<i32>().unwrap());
+                    match digit.parse::<i32>() {
+                        Ok(num) => {
+                            bits = format!("{:0>15b}", num);
+                        },
+                        Err(_) => {
+                            if !self.symbol_table.contains_key(digit) {
+                                self.symbol_table.insert(String::from(digit), self.mem);
+                                self.mem += 1;
+                            }
+                            bits = format!("{:0>15b}", self.symbol_table.get(digit).unwrap());
+                        }
+                    };
                 }
 
                 opcode = opcode + &bits;
@@ -136,7 +147,8 @@ impl<'a> Parser<'a> {
             },
         }
 
-        opcode + "\n"
+        if opcode != "" { opcode.push_str("\n") }
+        opcode
     }
 
     pub fn token_type<'b>(&'b self, token: &'b str) -> TokenType {
@@ -194,20 +206,12 @@ impl<'a> Parser<'a> {
                 self.symbol_table.insert(String::from(label), self.pc);
             },
             TokenType::ACommand => {
-                let capture = self.a_command_regex.captures(token).unwrap();
-                let variable = capture.at(1).unwrap();
-                match variable.parse::<i32>() {
-                    Err(_) => {
-                        if !self.symbol_table.contains_key(variable) {
-                            self.symbol_table.insert(String::from(variable), self.pc);
-                        }
-                    },
-                    _ => {},
-                }
+                self.pc += 1;
             },
-            _ => {},
+            _ => {
+                self.pc += 1;
+            },
         }
-        self.pc += 1;
     }
 }
 
