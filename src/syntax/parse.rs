@@ -111,7 +111,7 @@ impl<'a> Parser<'a> {
     pub fn parse<'b>(&'b mut self, token: &'b str) -> String {
         let mut opcode = String::new();
         match self.token_type(token) {
-            TokenType::LCommand => {},
+            TokenType::LCommand => {}
             TokenType::ACommand => {
                 opcode.push_str("0");
                 let capture = self.a_command_regex.captures(token).unwrap();
@@ -124,7 +124,7 @@ impl<'a> Parser<'a> {
                     match digit.parse::<i32>() {
                         Ok(num) => {
                             bits = format!("{:0>15b}", num);
-                        },
+                        }
                         Err(_) => {
                             if !self.symbol_table.contains_key(digit) {
                                 self.symbol_table.insert(String::from(digit), self.mem);
@@ -132,11 +132,11 @@ impl<'a> Parser<'a> {
                             }
                             bits = format!("{:0>15b}", self.symbol_table.get(digit).unwrap());
                         }
-                    };
+                    }
                 }
 
                 opcode = opcode + &bits;
-            },
+            }
             TokenType::CCommand => {
                 opcode.push_str("111");
                 let comp_bits = self.get_comp_bits(token);
@@ -144,10 +144,12 @@ impl<'a> Parser<'a> {
                 let jump_bits = self.get_jump_bits(token);
 
                 opcode = opcode + &comp_bits + &dest_bits + &jump_bits;
-            },
+            }
         }
 
-        if opcode != "" { opcode.push_str("\n") }
+        if opcode != "" {
+            opcode.push_str("\n")
+        }
         opcode
     }
 
@@ -197,20 +199,22 @@ impl<'a> Parser<'a> {
     }
 
     pub fn collect_symbols<'b>(&'b mut self, token: &'b str) {
-        if token == "" { return; }
+        if token == "" {
+            return;
+        }
 
         match self.token_type(token) {
             TokenType::LCommand => {
                 let capture = self.l_command_regex.captures(token).unwrap();
                 let label = capture.at(1).unwrap();
                 self.symbol_table.insert(String::from(label), self.pc);
-            },
+            }
             TokenType::ACommand => {
                 self.pc += 1;
-            },
+            }
             _ => {
                 self.pc += 1;
-            },
+            }
         }
     }
 }
