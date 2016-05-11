@@ -1,12 +1,12 @@
-extern crate hackasm;
+extern crate libhackasm;
 
 use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufWriter;
-use hackasm::syntax::lex::Lexer;
-use hackasm::syntax::parse::Parser;
+use libhackasm::syntax::lex::Lexer;
+use libhackasm::syntax::parse::Parser;
 
 fn main() {
     let file_path = match env::args().nth(1) {
@@ -37,7 +37,7 @@ fn main() {
 
     let mut output_writer = BufWriter::new(output_file);
 
-    for opcode in opcodes.iter() {
+    for opcode in &opcodes {
         output_writer.write_all(opcode.as_bytes()).unwrap();
     }
 }

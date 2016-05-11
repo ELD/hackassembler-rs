@@ -62,7 +62,7 @@ impl<'a> Iterator for LexerIter<'a> {
 
 #[cfg(test)]
 mod test {
-    use super::{Lexer, LexerIter};
+    use super::Lexer;
     use std::io::prelude::*;
     use std::io::Cursor;
 
