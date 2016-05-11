@@ -31,15 +31,15 @@ impl Lexer {
         Lexer { lines: lines }
     }
 
-    pub fn iter<'a>(&'a mut self) -> LexerIter<'a> {
+    pub fn iter(&mut self) -> LexerIter {
         LexerIter { line_iter: self.lines.iter() }
     }
 
-    fn is_ignored_token<'a>(token: &'a str) -> bool {
+    fn is_ignored_token(token: &str) -> bool {
         token.starts_with("//")
     }
 
-    fn trim_command<'a>(token: &'a str) -> &'a str {
+    fn trim_command(token: &str) -> &str {
         // let command_regex = Regex::new(r"(\S*)(?:\s?//.*)?").unwrap();
         let command_regex = Regex::new(r"([^//]*)").unwrap();
 

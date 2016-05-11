@@ -14,13 +14,127 @@ pub struct Parser<'a> {
 
 #[derive(Debug, PartialEq)]
 pub enum TokenType {
-    LCommand,
-    ACommand,
-    CCommand,
+    L,
+    A,
+    C,
 }
 
 impl<'a> Parser<'a> {
     pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn parse<'b>(&'b mut self, token: &'b str) -> String {
+        let mut opcode = String::new();
+        match self.token_type(token) {
+            TokenType::L => {}
+            TokenType::A => {
+                opcode.push_str("0");
+                let capture = self.a_command_regex.captures(token).unwrap();
+                let digit = capture.at(1).unwrap();
+
+                let bits: String;
+                if self.symbol_table.contains_key(digit) {
+                    bits = format!("{:0>15b}", self.symbol_table.get(digit).unwrap());
+                } else {
+                    match digit.parse::<i32>() {
+                        Ok(num) => {
+                            bits = format!("{:0>15b}", num);
+                        }
+                        Err(_) => {
+                            if !self.symbol_table.contains_key(digit) {
+                                self.symbol_table.insert(String::from(digit), self.mem);
+                                self.mem += 1;
+                            }
+                            bits = format!("{:0>15b}", self.symbol_table.get(digit).unwrap());
+                        }
+                    }
+                }
+
+                opcode = opcode + &bits;
+            }
+            TokenType::C => {
+                opcode.push_str("111");
+                let comp_bits = self.get_comp_bits(token);
+                let dest_bits = self.get_dest_bits(token);
+                let jump_bits = self.get_jump_bits(token);
+
+                opcode = opcode + &comp_bits + &dest_bits + &jump_bits;
+            }
+        }
+
+        if opcode != "" {
+            opcode.push_str("\n")
+        }
+        opcode
+    }
+
+    pub fn token_type<'b>(&'b self, token: &'b str) -> TokenType {
+        if self.l_command_regex.is_match(token) {
+            return TokenType::L;
+        }
+
+        if self.a_command_regex.is_match(token) {
+            return TokenType::A;
+        }
+
+        TokenType::C
+    }
+
+    pub fn get_comp_bits<'b>(&'b self, token: &'b str) -> String {
+        let mut comp_bits = String::new();
+        if token.contains(';') {
+            let mut comp_split = token.split(';');
+            comp_bits = comp_bits + self.comp_bits.get(comp_split.nth(0).unwrap()).unwrap();
+        } else {
+            let mut comp_split = token.split('=');
+            comp_bits = comp_bits + self.comp_bits.get(comp_split.nth(1).unwrap()).unwrap();
+        }
+
+        comp_bits
+    }
+
+    pub fn get_dest_bits<'b>(&'b self, token: &'b str) -> String {
+        if token.contains(';') {
+            return String::from(*self.dest_bits.get("null").unwrap());
+        }
+
+        let mut dest_split = token.split('=');
+        String::from(*self.dest_bits.get(dest_split.nth(0).unwrap()).unwrap())
+    }
+
+    pub fn get_jump_bits<'b>(&'b self, token: &'b str) -> String {
+        if token.contains('=') {
+            return String::from(*self.jump_bits.get("null").unwrap());
+        }
+
+        let mut jump_split = token.split(';');
+        String::from(*self.jump_bits.get(jump_split.nth(1).unwrap()).unwrap())
+    }
+
+    pub fn collect_symbols<'b>(&'b mut self, token: &'b str) {
+        if token == "" {
+            return;
+        }
+
+        match self.token_type(token) {
+            TokenType::L => {
+                let capture = self.l_command_regex.captures(token).unwrap();
+                let label = capture.at(1).unwrap();
+                self.symbol_table.insert(String::from(label), self.pc);
+            }
+            TokenType::A => {
+                self.pc += 1;
+            }
+            _ => {
+                self.pc += 1;
+            }
+        }
+    }
+}
+
+impl<'a> Default for Parser<'a> {
+    fn default() -> Self {
         let mut comp_bits = HashMap::new();
         comp_bits.insert("0", "0101010");
         comp_bits.insert("1", "0111111");
@@ -107,116 +221,6 @@ impl<'a> Parser<'a> {
             symbol_table: symbol_table,
         }
     }
-
-    pub fn parse<'b>(&'b mut self, token: &'b str) -> String {
-        let mut opcode = String::new();
-        match self.token_type(token) {
-            TokenType::LCommand => {}
-            TokenType::ACommand => {
-                opcode.push_str("0");
-                let capture = self.a_command_regex.captures(token).unwrap();
-                let digit = capture.at(1).unwrap();
-
-                let bits: String;
-                if self.symbol_table.contains_key(digit) {
-                    bits = format!("{:0>15b}", self.symbol_table.get(digit).unwrap());
-                } else {
-                    match digit.parse::<i32>() {
-                        Ok(num) => {
-                            bits = format!("{:0>15b}", num);
-                        }
-                        Err(_) => {
-                            if !self.symbol_table.contains_key(digit) {
-                                self.symbol_table.insert(String::from(digit), self.mem);
-                                self.mem += 1;
-                            }
-                            bits = format!("{:0>15b}", self.symbol_table.get(digit).unwrap());
-                        }
-                    }
-                }
-
-                opcode = opcode + &bits;
-            }
-            TokenType::CCommand => {
-                opcode.push_str("111");
-                let comp_bits = self.get_comp_bits(token);
-                let dest_bits = self.get_dest_bits(token);
-                let jump_bits = self.get_jump_bits(token);
-
-                opcode = opcode + &comp_bits + &dest_bits + &jump_bits;
-            }
-        }
-
-        if opcode != "" {
-            opcode.push_str("\n")
-        }
-        opcode
-    }
-
-    pub fn token_type<'b>(&'b self, token: &'b str) -> TokenType {
-        if self.l_command_regex.is_match(token) {
-            return TokenType::LCommand;
-        }
-
-        if self.a_command_regex.is_match(token) {
-            return TokenType::ACommand;
-        }
-
-        return TokenType::CCommand;
-    }
-
-    pub fn get_comp_bits<'b>(&'b self, token: &'b str) -> String {
-        let mut comp_bits = String::new();
-        if token.contains(";") {
-            let mut comp_split = token.split(";");
-            comp_bits = comp_bits + self.comp_bits.get(comp_split.nth(0).unwrap()).unwrap();
-        } else {
-            let mut comp_split = token.split("=");
-            comp_bits = comp_bits + self.comp_bits.get(comp_split.nth(1).unwrap()).unwrap();
-        }
-
-        comp_bits
-    }
-
-    pub fn get_dest_bits<'b>(&'b self, token: &'b str) -> String {
-        if token.contains(";") {
-            return String::from(*self.dest_bits.get("null").unwrap());
-        }
-
-        let mut dest_split = token.split("=");
-        let dest_bits = String::from(*self.dest_bits.get(dest_split.nth(0).unwrap()).unwrap());
-
-        dest_bits
-    }
-
-    pub fn get_jump_bits<'b>(&'b self, token: &'b str) -> String {
-        if token.contains("=") {
-            return String::from(*self.jump_bits.get("null").unwrap());
-        }
-
-        let mut jump_split = token.split(";");
-        String::from(*self.jump_bits.get(jump_split.nth(1).unwrap()).unwrap())
-    }
-
-    pub fn collect_symbols<'b>(&'b mut self, token: &'b str) {
-        if token == "" {
-            return;
-        }
-
-        match self.token_type(token) {
-            TokenType::LCommand => {
-                let capture = self.l_command_regex.captures(token).unwrap();
-                let label = capture.at(1).unwrap();
-                self.symbol_table.insert(String::from(label), self.pc);
-            }
-            TokenType::ACommand => {
-                self.pc += 1;
-            }
-            _ => {
-                self.pc += 1;
-            }
-        }
-    }
 }
 
 #[cfg(test)]
@@ -236,10 +240,10 @@ mod test {
     fn recognizes_token_types() {
         let parser = setup();
 
-        assert_eq!(parser.token_type("(LOOP)"), TokenType::LCommand);
-        assert_eq!(parser.token_type("@i"), TokenType::ACommand);
-        assert_eq!(parser.token_type("@R2"), TokenType::ACommand);
-        assert_eq!(parser.token_type("M=M+D"), TokenType::CCommand);
+        assert_eq!(parser.token_type("(LOOP)"), TokenType::L);
+        assert_eq!(parser.token_type("@i"), TokenType::A);
+        assert_eq!(parser.token_type("@R2"), TokenType::A);
+        assert_eq!(parser.token_type("M=M+D"), TokenType::C);
     }
 
     #[test]
