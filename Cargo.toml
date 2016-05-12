@@ -1,5 +1,5 @@
 [package]
-name = "hack-assembler-rs"
+name = "hackassembler"
 version = "0.1.0"
 authors = ["Eric L. Dattore <eric.dattore@gmail.com>"]
 
@@ -22,4 +22,3 @@ codegen-units = 2
 
 [dependencies.regex]
 version = "*"
-
