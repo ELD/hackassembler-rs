@@ -1,12 +1,12 @@
-extern crate libhackasm;
+extern crate hackasm;
 
 use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufWriter;
-use libhackasm::syntax::lex::Lexer;
-use libhackasm::syntax::parse::Parser;
+use hackasm::syntax::lex::Lexer;
+use hackasm::syntax::parse::Parser;
 
 fn main() {
     let file_path = match env::args().nth(1) {
