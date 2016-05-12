@@ -1,5 +1,5 @@
 [root]
-name = "hack-assembler-rs"
+name = "hackassembler"
 version = "0.1.0"
 dependencies = [
  "regex 0.1.48 (registry+https://github.com/rust-lang/crates.io-index)",
