@@ -2,8 +2,8 @@
 ## Written in (possibly) idiomatic Rust
 
 #### Build status
-master: [![Build Status](https://travis-ci.org/ELD/hack-assembler-rs.svg?branch=master)](https://travis-ci.org/ELD/hack-assembler-rs)
-develop: [![Build Status](https://travis-ci.org/ELD/hack-assembler-rs.svg?branch=develop)](https://travis-ci.org/ELD/hack-assembler-rs)
+master: [![Build Status](https://travis-ci.org/ELD/hackassembler-rs.svg?branch=master)](https://travis-ci.org/ELD/hack-assembler-rs)
+develop: [![Build Status](https://travis-ci.org/ELD/hackassembler-rs.svg?branch=develop)](https://travis-ci.org/ELD/hack-assembler-rs)
 
 ### Overview
 This is the Hack Assembler from the Elements of Computing Systems book and the nand2tetris suite. This solution works
